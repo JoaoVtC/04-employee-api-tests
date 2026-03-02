@@ -6,6 +6,7 @@ import com.example.employee.dto.EmployeeResponse;
 import com.example.employee.exception.DuplicateEmailException;
 import com.example.employee.exception.EmployeeNotFoundException;
 import com.example.employee.exception.SalaryBelowMinimumException;
+import com.example.employee.mapper.EmployeeMapper;
 import com.example.employee.model.Department;
 import com.example.employee.model.Employee;
 import com.example.employee.repository.DepartmentRepository;
@@ -19,7 +20,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -29,8 +29,6 @@ import static org.mockito.Mockito.*;
 
 /**
  * Testes unitários do {@link EmployeeService} usando Mockito.
- *
- * <p>Exercícios TODO 2, 3 e 4 — implemente os testes marcados abaixo.</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("EmployeeService — Testes Unitários")
@@ -49,92 +47,72 @@ class EmployeeServiceTest {
     private ArgumentCaptor<Employee> employeeCaptor;
 
     // ====================================================================
-    // TODO 2: Teste de criação com sucesso
+    // Teste de criação com sucesso
     // ====================================================================
     @Nested
     @DisplayName("create()")
     class Create {
 
-        /**
-         * TODO 2: Implementar teste de criação com sucesso
-         *
-         * Passos:
-         * 1. Criar um EmployeeRequest usando o EmployeeBuilder
-         * 2. Configurar mocks:
-         *    - employeeRepository.existsByEmail(...) → false
-         *    - departmentRepository.findById(...) → Optional.of(department)
-         *    - employeeRepository.save(...) → employee salvo
-         * 3. Chamar service.create(request)
-         * 4. Verificar que o resultado tem os dados corretos
-         * 5. Usar ArgumentCaptor para verificar o que foi salvo
-         */
         @Test
         @DisplayName("deve criar funcionário com sucesso")
-        @Disabled("TODO 2: Implementar este teste")
         void shouldCreateEmployee() {
             // Arrange
-            // TODO 2: Criar request com EmployeeBuilder
-            // TODO 2: Configurar mocks (when/thenReturn)
+            Department department = new Department(2L, "Financeiro");
+            EmployeeRequest employeeRequest = new EmployeeBuilder().withId(1L).withName("João").withEmail("joao@email.com").withDepartment(department).buildRequest();
+            Employee employee = EmployeeMapper.toEntity(employeeRequest, department);
+
+
+            when(employeeRepository.existsByEmail(employeeRequest.email())).thenReturn(false);
+            when(departmentRepository.findById(employeeRequest.departmentId())).thenReturn(Optional.of(department));
+            when(employeeRepository.save(any(Employee.class))).thenReturn(employee);
 
             // Act
-            // TODO 2: Chamar service.create(request)
+            EmployeeResponse created = service.create(employeeRequest);
 
             // Assert
-            // TODO 2: Verificar resultado com assertThat
-            // TODO 2: Usar verify + ArgumentCaptor
+
+            assertThat(created).isEqualTo(EmployeeMapper.toResponse(employee));
+            verify(employeeRepository).save(employeeCaptor.capture());
+            Employee captured = employeeCaptor.getValue();
+            assertThat(captured.getName()).isEqualTo(employeeRequest.name());
+            assertThat(captured.getEmail()).isEqualTo(employeeRequest.email());
+            assertThat(captured.getCpf()).isEqualTo(employeeRequest.cpf());
+            assertThat(captured.getSalary()).isEqualTo(employeeRequest.salary());
+            assertThat(captured.getDepartment().getId()).isEqualTo(employeeRequest.departmentId());
         }
 
         // ================================================================
-        // TODO 3: Teste de salário mínimo
+        // Teste de salário mínimo
         // ================================================================
 
-        /**
-         * TODO 3: Implementar teste que verifica a regra de salário mínimo
-         *
-         * Passos:
-         * 1. Criar request com salário abaixo de R$ 1.412,00
-         * 2. Chamar service.create(request)
-         * 3. Verificar que lança SalaryBelowMinimumException
-         * 4. Verificar que save() NUNCA foi chamado
-         */
         @Test
         @DisplayName("deve lançar exceção quando salário é menor que o mínimo")
-        @Disabled("TODO 3: Implementar este teste")
         void shouldThrowWhenSalaryBelowMinimum() {
             // Arrange
-            // TODO 3: Criar request com salário = 1000.00
+            Department department = new Department(2L, "Financeiro");
+            EmployeeRequest employeeRequest = new EmployeeBuilder().withId(1L).withName("João").withEmail("joao@email.com").withDepartment(department).withSalary(BigDecimal.valueOf(1000.0)).buildRequest();
 
             // Act & Assert
-            // TODO 3: assertThatThrownBy + isInstanceOf(SalaryBelowMinimumException.class)
-            // TODO 3: verify(employeeRepository, never()).save(any())
+            assertThatThrownBy(() -> service.create(employeeRequest)).isInstanceOf(SalaryBelowMinimumException.class);
+            verify(employeeRepository, never()).save(any());
         }
 
         // ================================================================
-        // TODO 4: Teste de email duplicado
+        // Teste de email duplicado
         // ================================================================
 
-        /**
-         * TODO 4: Implementar teste que verifica a regra de email único
-         *
-         * Passos:
-         * 1. Criar request com email que já existe
-         * 2. Configurar mock: existsByEmail → true
-         * 3. Chamar service.create(request)
-         * 4. Verificar que lança DuplicateEmailException
-         * 5. Verificar que save() NUNCA foi chamado
-         */
         @Test
         @DisplayName("deve lançar exceção quando email já existe")
-        @Disabled("TODO 4: Implementar este teste")
         void shouldThrowWhenEmailExists() {
             // Arrange
-            // TODO 4: Criar request com EmployeeBuilder
+            Department department = new Department(1L, "Financeiro");
+            EmployeeRequest employeeRequest = new EmployeeBuilder().withId(1L).withName("João").withEmail("joao@email.com").withDepartment(department).buildRequest();
 
-            // TODO 4: Configurar mock existsByEmail → true
+            when(employeeRepository.existsByEmail(employeeRequest.email())).thenReturn(true);
 
             // Act & Assert
-            // TODO 4: assertThatThrownBy + isInstanceOf(DuplicateEmailException.class)
-            // TODO 4: verify(employeeRepository, never()).save(any())
+            assertThatThrownBy(() -> service.create(employeeRequest)).isInstanceOf(DuplicateEmailException.class);
+            verify(employeeRepository, never()).save(any());
         }
     }
 

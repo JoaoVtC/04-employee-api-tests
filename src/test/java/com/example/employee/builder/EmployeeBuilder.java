@@ -7,45 +7,57 @@ import com.example.employee.model.Employee;
 import java.math.BigDecimal;
 
 /**
- * ============================================
- * TODO 1: Implementar o EmployeeBuilder
- * ============================================
- *
- * Crie um Data Builder para facilitar a criação de objetos de teste.
- * O Builder deve ter valores padrão para todos os campos e métodos
- * withXxx() para customizar cada campo.
- *
- * Valores padrão sugeridos:
- *   - id: 1L
- *   - name: "Ana Silva"
- *   - email: "ana.silva@email.com"
- *   - cpf: "123.456.789-09"
- *   - salary: new BigDecimal("5000.00")
- *   - department: new Department(1L, "Engenharia")
- *
- * Métodos a implementar:
- *   - withId(Long id)
- *   - withName(String name)
- *   - withEmail(String email)
- *   - withCpf(String cpf)
- *   - withSalary(BigDecimal salary)
- *   - withDepartment(Department department)
- *   - build() → Employee
- *   - buildRequest() → EmployeeRequest
- *
- * Exemplo de uso esperado:
- *   Employee emp = new EmployeeBuilder().build();                    // valores padrão
- *   Employee emp2 = new EmployeeBuilder().withName("Carlos").build(); // nome customizado
- *   EmployeeRequest req = new EmployeeBuilder().buildRequest();       // DTO request
+ * Data Builder para facilitar a criação de objetos de teste.
  */
 public class EmployeeBuilder {
 
-    // TODO 1: Declarar campos com valores padrão
+    private Long id = 1L;
+    private String name = "Ana Silva";
+    private String email = "ana.silva@email.com";
+    private String cpf = "436.972.178-44";
+    private BigDecimal salary = new BigDecimal("5000.00");
+    private Department department = new Department(1L, "Engenharia");
 
-    // TODO 1: Implementar métodos withXxx() que retornam this
+    public EmployeeBuilder withId(Long id){
+        this.id = id;
+        return this;
+    }
 
-    // TODO 1: Implementar build() que retorna Employee
+    public EmployeeBuilder withName(String name){
+        this.name = name;
+        return this;
+    }
 
-    // TODO 1: Implementar buildRequest() que retorna EmployeeRequest
+    public EmployeeBuilder withEmail(String email){
+        this.email = email;
+        return this;
+    }
+
+    public EmployeeBuilder withCpf(String cpf){
+        this.cpf = cpf;
+        return this;
+    }
+
+    public EmployeeBuilder withSalary(BigDecimal salary){
+        this.salary = salary;
+        return this;
+    }
+
+    public EmployeeBuilder withDepartment(Department department){
+        this.department = department;
+        return this;
+    }
+
+    public Employee build(){
+        Employee employee = new Employee(name, email, cpf, salary, department);
+        employee.setId(id);
+
+        return employee;
+    }
+
+
+    public EmployeeRequest buildRequest(){
+        return new EmployeeRequest(name, email, cpf, salary, department.getId());
+    }
 
 }

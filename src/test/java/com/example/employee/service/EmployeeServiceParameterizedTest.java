@@ -91,7 +91,6 @@ class EmployeeServiceParameterizedTest {
         BigDecimal invalidSalary = new BigDecimal(salaryStr);
 
         // Nota: como o EmployeeBuilder ainda não está implementado,
-        // este teste só funciona após TODO 1 ser concluído.
         // Quando implementado, use:
         //   var request = new EmployeeBuilder()
         //       .withSalary(invalidSalary)
