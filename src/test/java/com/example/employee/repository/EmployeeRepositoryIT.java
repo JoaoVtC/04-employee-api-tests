@@ -41,32 +41,26 @@ class EmployeeRepositoryIT extends AbstractIntegrationTest {
     // TODO 6: Testes de integração — save e findById
     // ====================================================================
 
-    /**
-     * TODO 6: Implementar teste de salvar e recuperar funcionário
-     *
-     * Passos:
-     * 1. Criar um Employee com todos os campos
-     * 2. Salvar com repository.save()
-     * 3. Buscar com repository.findById()
-     * 4. Verificar que:
-     *    - O resultado está presente (isPresent)
-     *    - name, email, cpf, salary estão corretos
-     *    - createdAt não é null
-     *    - department.name está correto
-     */
     @Test
     @DisplayName("deve salvar e recuperar funcionário por ID")
-    @Disabled("TODO 6: Implementar este teste")
     void shouldSaveAndFindById() {
         // Arrange
-        // TODO 6: Criar Employee com new Employee("Ana Silva", "ana@email.com",
-        //         "123.456.789-09", new BigDecimal("5000.00"), department)
+        Employee employee = new Employee("Ana Silva", "ana@email.com",
+        "123.456.789-09", new BigDecimal("5000.00"), department);
 
         // Act
-        // TODO 6: Salvar e buscar por ID
+        Employee saved = employeeRepository.save(employee);
+        Optional<Employee> found = employeeRepository.findById(saved.getId());
 
         // Assert
-        // TODO 6: Verificar campos com assertThat
+        assertThat(found).isPresent();
+        Employee foundEmployee = found.get();
+        assertThat(foundEmployee.getName()).isEqualTo(employee.getName());
+        assertThat(foundEmployee.getEmail()).isEqualTo(employee.getEmail());
+        assertThat(foundEmployee.getCpf()).isEqualTo(employee.getCpf());
+        assertThat(foundEmployee.getSalary()).isEqualTo(employee.getSalary());
+        assertThat(foundEmployee.getDepartment().getName()).isEqualTo(employee.getDepartment().getName());
+        assertThat(foundEmployee.getCreatedAt()).isNotNull();
     }
 
     /**
@@ -79,45 +73,38 @@ class EmployeeRepositoryIT extends AbstractIntegrationTest {
      */
     @Test
     @DisplayName("deve encontrar funcionário por email")
-    @Disabled("TODO 6: Implementar este teste")
     void shouldFindByEmail() {
         // Arrange
-        // TODO 6: Criar e salvar Employee
+        Employee employee = new Employee("Ana Silva", "ana@email.com",
+        "123.456.789-09", new BigDecimal("5000.00"), department);
+        Employee saved = employeeRepository.save(employee);
 
         // Act
-        // TODO 6: Buscar por email
+        Optional<Employee> findedByEmail = employeeRepository.findByEmail(saved.getEmail());
 
         // Assert
-        // TODO 6: Verificar que está presente e tem o nome correto
+        assertThat(findedByEmail).isPresent();
+        Employee findedEmployee = findedByEmail.get();
+        assertThat(findedEmployee.getEmail()).isEqualTo(employee.getEmail());
+        assertThat(findedEmployee.getName()).isEqualTo(employee.getName());
     }
 
     // ====================================================================
     // TODO 7: Teste de UNIQUE constraint no email
     // ====================================================================
-
-    /**
-     * TODO 7: Implementar teste de restrição UNIQUE no email
-     *
-     * Passos:
-     * 1. Salvar um funcionário com email "ana@email.com" usando saveAndFlush()
-     * 2. Criar OUTRO funcionário com o MESMO email
-     * 3. Tentar salvar com saveAndFlush()
-     * 4. Verificar que lança uma Exception (constraint violation)
-     *
-     * Dica: use assertThatThrownBy(() -> repository.saveAndFlush(employee2))
-     *           .isInstanceOf(Exception.class);
-     */
     @Test
     @DisplayName("deve rejeitar email duplicado (UNIQUE constraint)")
-    @Disabled("TODO 7: Implementar este teste")
     void shouldRejectDuplicateEmail() {
         // Arrange
-        // TODO 7: Criar e salvar primeiro funcionário com saveAndFlush()
-
-        // TODO 7: Criar segundo funcionário com MESMO email
+        Employee employee = new Employee("Ana Silva", "ana@email.com",
+        "123.456.789-09", new BigDecimal("5000.00"), department);
+        employeeRepository.saveAndFlush(employee);
+        Employee employee2 = new Employee("Ana Carla", "ana@email.com",
+        "123.456.789-09", new BigDecimal("5000.00"), department);
 
         // Act & Assert
-        // TODO 7: assertThatThrownBy para o segundo save
+        assertThatThrownBy(() -> employeeRepository.saveAndFlush(employee2))
+                .isInstanceOf(Exception.class);
     }
 
     // ====================================================================

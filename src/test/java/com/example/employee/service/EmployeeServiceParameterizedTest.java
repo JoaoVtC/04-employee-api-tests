@@ -1,6 +1,11 @@
 package com.example.employee.service;
 
 import com.example.employee.builder.EmployeeBuilder;
+import com.example.employee.dto.EmployeeRequest;
+import com.example.employee.dto.EmployeeResponse;
+import com.example.employee.exception.SalaryBelowMinimumException;
+import com.example.employee.mapper.EmployeeMapper;
+import com.example.employee.model.Department;
 import com.example.employee.model.Employee;
 import com.example.employee.repository.DepartmentRepository;
 import com.example.employee.repository.EmployeeRepository;
@@ -19,12 +24,12 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 /**
  * Testes parametrizados do {@link EmployeeService}.
  *
- * <p>Exercício TODO 5 — implemente os testes parametrizados.</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("EmployeeService — Testes Parametrizados")
@@ -39,27 +44,6 @@ class EmployeeServiceParameterizedTest {
     @InjectMocks
     private EmployeeService service;
 
-    // ====================================================================
-    // TODO 5: Teste parametrizado de validação de CPF
-    // ====================================================================
-
-    /**
-     * TODO 5: Implementar teste parametrizado para CPFs válidos
-     *
-     * Use @ParameterizedTest com @CsvSource para testar múltiplos CPFs.
-     * Cada linha deve ter: cpf, nome, email
-     *
-     * CPFs válidos para testar:
-     *   "123.456.789-09, Ana Silva, ana@email.com"
-     *   "987.654.321-00, Carlos Santos, carlos@email.com"
-     *   "111.222.333-44, Maria Oliveira, maria@email.com"
-     *
-     * Passos:
-     * 1. Criar request com os dados da linha @CsvSource
-     * 2. Configurar mocks necessários
-     * 3. Chamar service.create(request)
-     * 4. Verificar que o CPF no resultado é o esperado
-     */
     @ParameterizedTest(name = "CPF {0} para {1}")
     @DisplayName("deve aceitar CPFs no formato válido")
     @CsvSource({
@@ -67,36 +51,37 @@ class EmployeeServiceParameterizedTest {
             "987.654.321-00, Carlos Santos, carlos@email.com",
             "111.222.333-44, Maria Oliveira, maria@email.com"
     })
-    @Disabled("TODO 5: Implementar este teste")
     void shouldAcceptValidCpfFormats(String cpf, String name, String email) {
         // Arrange
-        // TODO 5: Criar request com EmployeeBuilder usando cpf, name, email
+        Department department = new Department(2L, "Financeiro");
+        EmployeeRequest employeeRequest = new EmployeeBuilder().withId(1L).withName(name).withEmail(email).withDepartment(department).withCpf(cpf).buildRequest();
+        Employee employee = EmployeeMapper.toEntity(employeeRequest, department);
 
-        // TODO 5: Configurar mocks (existsByEmail → false, findById departamento, save)
+        when(employeeRepository.existsByEmail(employeeRequest.email())).thenReturn(false);
+        when(departmentRepository.findById(employeeRequest.departmentId())).thenReturn(Optional.of(department));
+        when(employeeRepository.save(any(Employee.class))).thenReturn(employee);
 
         // Act
-        // TODO 5: Chamar service.create(request)
+        EmployeeResponse created = service.create(employeeRequest);
 
         // Assert
-        // TODO 5: Verificar que result.cpf() == cpf
+        assertThat(created.cpf()).isEqualTo(cpf);
+        
     }
 
-    /**
-     * Teste parametrizado de salários inválidos (exemplo — já implementado).
-     */
+    
     @ParameterizedTest(name = "salário R$ {0} deve ser rejeitado")
     @DisplayName("deve rejeitar salários abaixo do mínimo")
     @ValueSource(strings = {"0.01", "500.00", "1000.00", "1411.99"})
     void shouldRejectInvalidSalaries(String salaryStr) {
+        // Arrange
         BigDecimal invalidSalary = new BigDecimal(salaryStr);
+        var request = new EmployeeBuilder()
+           .withSalary(invalidSalary)
+           .withEmail("test-" + salaryStr + "@email.com")
+           .buildRequest();
 
-        // Nota: como o EmployeeBuilder ainda não está implementado,
-        // Quando implementado, use:
-        //   var request = new EmployeeBuilder()
-        //       .withSalary(invalidSalary)
-        //       .withEmail("test-" + salaryStr + "@email.com")
-        //       .buildRequest();
-        //   assertThatThrownBy(() -> service.create(request))
-        //       .isInstanceOf(SalaryBelowMinimumException.class);
+        // Act & Assert
+        assertThatThrownBy(() -> service.create(request)).isInstanceOf(SalaryBelowMinimumException.class);
     }
 }
